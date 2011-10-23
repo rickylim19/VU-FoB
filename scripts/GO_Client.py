@@ -1,4 +1,3 @@
-import string
 import re
 import urllib2
 from copy import copy
@@ -25,13 +24,14 @@ class GOTerm:
         self.evidence.append( (ref, evidence_code) )
 
     def has_evidence(self, evidence_code):
-        """Check wether this term has evidence with a certain code"""
+        """Check whether this term has evidence with a certain code"""
         for (ref, ec) in self.evidence:
             if (ec == evidence_code):
                 return True
         return False
 
     def has_evidence_class(self, evidence_class):
+        """Check whether this term has evidence with a certain class"""
         for (ref, ec) in self.evidence:
             if (ec in evidence_class):
                 return True
@@ -47,6 +47,7 @@ class GOTerms:
     """Holds the GO term of a protein"""
 
     def __init__(self, protein_id):
+                #Initialize the class with a specific protein_id
         self.protein_id = protein_id
         self.terms = []
 
@@ -100,19 +101,29 @@ class GOTerms:
 def getGOTerms(protein_id):
     """Get the GO terms for and uniprot protein id"""
     baseUrl = 'http://www.ebi.ac.uk/QuickGO/GAnnotation?protein='
-    url = baseUrl + protein_id + '&format=tsv'	
+    url = baseUrl + protein_id + '&format=tsv'  
     fh = urllib2.urlopen(url)
-
+    result = fh.read()
+    fh.close()
+    
+    #Save the result
+    output = protein_id + '_GOTerms.txt'
+    o = open(output, 'w') 
+    o.write(result) 
+    o.close()
+    
+    f = open(protein_id + "_GOTerms.txt", 'r')
     terms = GOTerms(protein_id)
-    fh.next() # skip headers
-    for line in fh:
+    f.next() # skip headers
+    for line in f:
         r = re.split("\t", line)
         terms.add_term(r[6], r[7], r[9], r[8])
-        aspect = r[11]
+        #aspect = r[11]
 
     fh.close()
     return terms
 
-f = open('proteins.txt', 'r')
-for line in f:
-    print getGOTerms(line.strip("\n")).filter_evidence_class(EC_EXPERIMENTAL)
+if __name__ == "__main__":
+    f = open('proteins.txt', 'r')
+    for line in f:
+        print getGOTerms(line.strip("\n")).filter_evidence_class(EC_EXPERIMENTAL)
